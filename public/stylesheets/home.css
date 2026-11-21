@@ -1,0 +1,385 @@
+/* ========================================
+   memorizer — Início
+======================================== */
+
+.home-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+
+    margin-bottom: 30px;
+    padding: 30px 32px;
+
+    background:
+        radial-gradient(circle at 100% 0, color-mix(in srgb, var(--brand) 16%, transparent), transparent 55%),
+        var(--surface);
+    border-radius: 26px;
+}
+
+.hero-eyebrow {
+    margin: 0 0 6px;
+
+    color: var(--brand-600);
+    font-size: .8rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.home-hero h2 {
+    margin: 0;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 900;
+}
+
+.hero-sub {
+    max-width: 46ch;
+    margin: 10px 0 22px;
+
+    color: var(--muted);
+    font-size: 1.02rem;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.hero-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+}
+
+/* ---------- Meta diária ---------- */
+
+.goal {
+    position: relative;
+
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+}
+
+.goal-ring {
+    width: 150px;
+    height: 150px;
+    transform: rotate(-90deg);
+}
+
+.goal-ring circle {
+    fill: none;
+    stroke-width: 11;
+}
+
+.goal-bg {
+    stroke: var(--line);
+}
+
+.goal-fg {
+    stroke: var(--brand);
+    stroke-linecap: round;
+    stroke-dasharray: 326.7;
+    stroke-dashoffset: 326.7;
+
+    transition: stroke-dashoffset .8s cubic-bezier(.3, .7, .2, 1);
+}
+
+.goal-center {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    height: 150px;
+}
+
+.goal-center strong {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.goal-center span {
+    color: var(--muted);
+    font-size: .78rem;
+}
+
+.goal small {
+    color: var(--muted);
+    font-weight: 800;
+}
+
+/* ---------- Modos de treino ---------- */
+
+.mode-card {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    height: 100%;
+    padding: 22px;
+
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+}
+
+.mode-card.is-available:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--tone) 45%, var(--line));
+    box-shadow: 0 14px 34px color-mix(in srgb, var(--tone) 16%, transparent);
+}
+
+.mode-card.is-soon {
+    background: transparent;
+    border-style: dashed;
+    box-shadow: none;
+}
+
+.mode-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.mode-ico {
+    display: grid;
+    place-items: center;
+
+    width: 54px;
+    height: 54px;
+
+    color: var(--tone);
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+    border-radius: 17px;
+
+    font-size: 1.55rem;
+}
+
+.mode-soon {
+    padding: 3px 10px;
+
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.mode-card h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.mode-card p {
+    margin: 0;
+
+    color: var(--muted);
+    font-size: .92rem;
+}
+
+.mode-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mode-stats li {
+    padding: 4px 11px;
+
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+
+    font-size: .78rem;
+}
+
+.mode-stats strong {
+    color: var(--text);
+    font-weight: 900;
+}
+
+.mode-card .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    margin-top: auto;
+}
+
+.mode-card .btn-primary {
+    --bs-btn-bg: var(--tone);
+    --bs-btn-border-color: var(--tone);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--tone) 85%, #000);
+    --bs-btn-hover-border-color: color-mix(in srgb, var(--tone) 85%, #000);
+    --bs-btn-active-bg: color-mix(in srgb, var(--tone) 85%, #000);
+    --bs-btn-active-border-color: color-mix(in srgb, var(--tone) 85%, #000);
+}
+
+/* ---------- Continuar + semana ---------- */
+
+.home-panel {
+    height: 100%;
+    padding: 22px;
+}
+
+.home-panel h2 {
+    margin: 0 0 16px;
+    font-size: 1.05rem;
+}
+
+.recent-list {
+    display: grid;
+    gap: 4px;
+
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.recent-item {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+
+    padding: 10px;
+
+    color: inherit;
+    border-radius: 16px;
+    text-decoration: none;
+
+    transition: background .15s;
+}
+
+.recent-item:hover {
+    background: var(--surface-2);
+    color: inherit;
+}
+
+.recent-ico {
+    display: grid;
+    place-items: center;
+
+    width: 40px;
+    height: 40px;
+
+    color: var(--tone);
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+    border-radius: 13px;
+}
+
+.recent-body strong {
+    display: block;
+    font-size: .95rem;
+}
+
+.recent-body small {
+    display: block;
+    margin-bottom: 6px;
+
+    color: var(--muted);
+    font-size: .76rem;
+}
+
+.recent-body .progress {
+    height: 6px;
+    --bs-progress-bar-bg: var(--tone);
+}
+
+.recent-go {
+    color: var(--muted);
+}
+
+.week-bars {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: end;
+    gap: 10px;
+
+    height: 150px;
+}
+
+.week-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+
+    height: 100%;
+}
+
+.week-col .bar {
+    width: 100%;
+    max-width: 34px;
+    height: var(--h);
+    min-height: 6px;
+
+    background: color-mix(in srgb, var(--brand) 32%, var(--surface));
+    border-radius: 10px;
+
+    transition: height .5s cubic-bezier(.3, .7, .2, 1);
+}
+
+.week-col.is-today .bar {
+    background: var(--brand);
+}
+
+.week-col.is-future .bar {
+    background: var(--line);
+}
+
+.week-col span {
+    color: var(--muted);
+    font-size: .75rem;
+    font-weight: 800;
+}
+
+.week-col.is-today span {
+    color: var(--text);
+}
+
+.week-total {
+    margin: 14px 0 0;
+
+    color: var(--muted);
+    font-size: .85rem;
+}
+
+.week-total strong {
+    color: var(--text);
+}
+
+@media (max-width: 767.98px) {
+    .home-hero {
+        grid-template-columns: 1fr;
+        padding: 22px;
+    }
+
+    .goal {
+        justify-self: start;
+    }
+}

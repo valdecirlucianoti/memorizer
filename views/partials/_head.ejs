@@ -1,0 +1,30 @@
+<%#
+    Parâmetros (include com dados):
+      title -> título da aba   |   css -> nome do CSS da tela (ex.: 'home' carrega /stylesheets/home.css)
+%>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f3ee">
+    <title><%= locals.title ? title + ' · memorizer' : 'memorizer' %></title>
+
+    <!-- Aplica o tema salvo antes da página aparecer (evita piscar) -->
+    <script>
+        (function () {
+            var tema = 'light';
+            try {
+                tema = localStorage.getItem('memorizer:theme') ||
+                    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            } catch (e) {}
+            document.documentElement.setAttribute('data-bs-theme', tema);
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap">
+
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/stylesheets/studio.css">
+    <% if (locals.css) { %><link rel="stylesheet" href="/stylesheets/<%= css %>.css"><% } %>
+</head>

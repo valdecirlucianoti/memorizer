@@ -1,0 +1,270 @@
+/* ========================================
+   memorizer — Ranking
+   Cor da seção: --c-rank
+======================================== */
+
+.rk-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.rk-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 20px;
+    align-items: start;
+}
+
+/* ---------- Pódio ---------- */
+
+.rk-podium-card {
+    padding: 28px 20px 0;
+    overflow: hidden;
+}
+
+.podium {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 12px;
+}
+
+.podium-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+
+    min-width: 0;
+    text-align: center;
+}
+
+.podium-col strong {
+    max-width: 100%;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: .95rem;
+}
+
+.podium-pts {
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.avatar-xl {
+    width: 64px;
+    height: 64px;
+
+    font-size: 1.15rem;
+    box-shadow: 0 0 0 4px var(--surface), 0 0 0 6px var(--ring, var(--line));
+}
+
+.pos-1 { --ring: #f5b82e; --h: 120px; --base: linear-gradient(#f9d56e, #f5b82e); }
+.pos-2 { --ring: #aab2c0; --h: 88px;  --base: linear-gradient(#d5dae3, #aab2c0); }
+.pos-3 { --ring: #cd8a4b; --h: 64px;  --base: linear-gradient(#e2ac78, #cd8a4b); }
+
+.pos-1 .avatar-xl {
+    width: 78px;
+    height: 78px;
+    font-size: 1.35rem;
+}
+
+.podium-crown {
+    color: #f5b82e;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.podium-base {
+    display: grid;
+    place-items: center;
+
+    width: 100%;
+    height: var(--h);
+    margin-top: 8px;
+
+    color: rgba(0, 0, 0, .55);
+    background: var(--base);
+    border-radius: 16px 16px 0 0;
+
+    font-size: 1.9rem;
+    font-weight: 900;
+}
+
+.podium-col.is-me strong {
+    color: var(--brand-600);
+}
+
+/* ---------- Lista ---------- */
+
+.rk-list-card {
+    margin-top: 20px;
+    padding: 10px;
+}
+
+.rank-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rank-row {
+    display: grid;
+    grid-template-columns: 36px 36px minmax(0, 1fr) minmax(80px, 160px) 72px;
+    align-items: center;
+    gap: 12px;
+
+    padding: 10px 12px;
+    border-radius: 14px;
+}
+
+.rank-row.is-me {
+    background: var(--brand-soft);
+}
+
+.rank-row .pos {
+    color: var(--muted);
+    font-weight: 900;
+    text-align: center;
+}
+
+.rank-row .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-weight: 800;
+}
+
+.rank-row .bar {
+    height: 7px;
+
+    overflow: hidden;
+    background: var(--line);
+    border-radius: 999px;
+}
+
+.rank-row .bar span {
+    display: block;
+    height: 100%;
+
+    background: var(--c-rank);
+    border-radius: inherit;
+    transition: width .4s ease;
+}
+
+.rank-row strong {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.rk-empty {
+    padding: 28px;
+
+    color: var(--muted);
+    text-align: center;
+}
+
+/* ---------- Sua posição ---------- */
+
+.rk-me {
+    position: sticky;
+    top: 88px;
+
+    padding: 22px;
+}
+
+.rk-me h2 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+}
+
+.rk-me-pos {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.rk-me-pos strong {
+    color: var(--c-rank);
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.rk-me-pos span {
+    color: var(--muted);
+    font-weight: 800;
+}
+
+.rk-me-pts {
+    margin: 4px 0 16px;
+
+    font-size: 1.1rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+}
+
+.rk-me ul {
+    display: grid;
+    gap: 8px;
+
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rk-me li {
+    padding: 10px 12px;
+
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+
+    font-size: .86rem;
+}
+
+.rk-me li strong {
+    font-weight: 900;
+}
+
+@media (max-width: 991.98px) {
+    .rk-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rk-me {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .rank-row {
+        grid-template-columns: 28px 32px minmax(0, 1fr) 64px;
+    }
+
+    .rank-row .bar {
+        display: none;
+    }
+
+    .avatar-xl {
+        width: 52px;
+        height: 52px;
+    }
+
+    .pos-1 .avatar-xl {
+        width: 62px;
+        height: 62px;
+    }
+}

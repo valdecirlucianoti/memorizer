@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<%- include('partials/_head', { title: 'Ranking', css: 'ranking' }) %>
+<body>
+<%- include('partials/_icons') %>
+
+<div class="studio-shell">
+    <%- include('partials/_sidebar', { active: 'ranking' }) %>
+
+    <div class="studio-main">
+        <%- include('partials/_topbar', { title: 'Ranking', subtitle: 'Veja quem está treinando mais' }) %>
+
+        <main class="studio-content">
+
+            <!-- Filtros -->
+            <div class="rk-toolbar">
+                <div class="seg" role="group" aria-label="Período" id="rkPeriods">
+                    <button type="button" data-periodo="week" aria-pressed="true">Semana</button>
+                    <button type="button" data-periodo="month" aria-pressed="false">Mês</button>
+                    <button type="button" data-periodo="all" aria-pressed="false">Geral</button>
+                </div>
+                <div class="seg" role="group" aria-label="Modo de treino" id="rkModes">
+                    <button type="button" data-modo="total" aria-pressed="true">Todos os modos</button>
+                    <button type="button" data-modo="flashcards" aria-pressed="false">Flash cards</button>
+                    <button type="button" data-modo="words" aria-pressed="false">Jogo de palavras</button>
+                </div>
+            </div>
+
+            <div class="rk-layout">
+                <div>
+                    <!-- Pódio -->
+                    <section class="rk-podium-card s-card" aria-label="Três primeiros colocados">
+                        <div class="podium" id="podium"></div>
+                    </section>
+
+                    <!-- Demais posições -->
+                    <section class="rk-list-card s-card" aria-label="Demais posições">
+                        <ol class="rank-list" id="rankList" start="4"></ol>
+                    </section>
+                </div>
+
+                <!-- Sua posição -->
+                <aside class="rk-me s-card" aria-live="polite">
+                    <h2>Sua posição</h2>
+                    <div id="rkMe"></div>
+                </aside>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<%- include('partials/_scripts') %>
+
+<!--
+    Esta tela não precisa de `pageData`: usa o ranking que a rota envia em `studio.ranking`
+    (week, month e all), com os pontos por modo em cada pessoa. Formato em studio.js.
+-->
+<script>
+(function () {
+    const esc = Studio.esc;
+    const fmt = Studio.fmt;
+    const $ = (id) => document.getElementById(id);
+
+    let periodo = 'week';
+    let modo = 'total';
+
+    function renderPodio(lista) {
+        const ordem = [1, 0, 2]; // 2º, 1º, 3º (o campeão fica no meio)
+
+        $('podium').innerHTML = ordem.map((i) => {
+            const p = lista[i];
+            if (!p) return '<div></div>';
+
+            return `
+                <div class="podium-col pos-${p.pos} ${p.me ? 'is-me' : ''}">
+                    ${p.pos === 1 ? '<span class="podium-crown" aria-hidden="true"><svg class="ic"><use href="#i-trophy"/></svg></span>' : ''}
+                    <span class="avatar avatar-xl" style="--c:${esc(p.color)}">${esc(p.initials)}</span>
+                    <strong title="${esc(p.name)}">${esc(p.name)}${p.me ? ' (você)' : ''}</strong>
+                    <span class="podium-pts">${fmt(p.pontos)} pts</span>
+                    <div class="podium-base">${p.pos}</div>
+                </div>`;
+        }).join('');
+    }
+
+    function renderLista(lista) {
+        const resto = lista.slice(3);
+        const maximo = Math.max(1, lista.length ? lista[0].pontos : 1);
+
+        $('rankList').innerHTML = resto.length
+            ? resto.map((p) => `
+                <li class="rank-row ${p.me ? 'is-me' : ''}" value="${p.pos}">
+                    <span class="pos">${p.pos}</span>
+                    <span class="avatar" style="--c:${esc(p.color)}">${esc(p.initials)}</span>
+                    <span class="name">${esc(p.name)}${p.me ? ' (você)' : ''}</span>
+                    <span class="bar" aria-hidden="true"><span style="width:${Math.round((p.pontos / maximo) * 100)}%"></span></span>
+                    <strong>${fmt(p.pontos)}</strong>
+                </li>`).join('')
+            : '<li class="rk-empty">Não há mais ninguém no ranking por enquanto.</li>';
+    }
+
+    function renderMinhaPosicao(lista) {
+        const eu = lista.find((p) => p.me);
+        if (!eu) {
+            $('rkMe').innerHTML = '<p class="muted mb-0">Você ainda não aparece neste ranking. Treine para entrar!</p>';
+            return;
+        }
+
+        const acima = lista[eu.pos - 2];
+        const abaixo = lista[eu.pos];
+        const itens = [];
+
+        itens.push(acima
+            ? `<li>Faltam <strong>${fmt(acima.pontos - eu.pontos + 1)} pts</strong> para passar ${esc(acima.name)}.</li>`
+            : '<li><strong>Você lidera!</strong> Continue treinando para manter a ponta.</li>');
+
+        if (abaixo) {
+            itens.push(`<li>Você está <strong>${fmt(eu.pontos - abaixo.pontos)} pts</strong> à frente de ${esc(abaixo.name)}.</li>`);
+        }
+
+        $('rkMe').innerHTML = `
+            <div class="rk-me-pos"><strong>#${eu.pos}</strong><span>de ${lista.length}</span></div>
+            <p class="rk-me-pts">${fmt(eu.pontos)} pontos</p>
+            <ul>${itens.join('')}</ul>`;
+    }
+
+    function render() {
+        const lista = Studio.ranking(periodo, modo);
+
+        renderPodio(lista);
+        renderLista(lista);
+        renderMinhaPosicao(lista);
+
+        document.querySelectorAll('[data-periodo]').forEach((b) =>
+            b.setAttribute('aria-pressed', String(b.dataset.periodo === periodo)));
+        document.querySelectorAll('[data-modo]').forEach((b) =>
+            b.setAttribute('aria-pressed', String(b.dataset.modo === modo)));
+    }
+
+    $('rkPeriods').addEventListener('click', (e) => {
+        const botao = e.target.closest('[data-periodo]');
+        if (botao) { periodo = botao.dataset.periodo; render(); }
+    });
+
+    $('rkModes').addEventListener('click', (e) => {
+        const botao = e.target.closest('[data-modo]');
+        if (botao) { modo = botao.dataset.modo; render(); }
+    });
+
+    Studio.on(render);
+    render();
+})();
+</script>
+</body>
+</html>

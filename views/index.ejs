@@ -1,11 +1,213 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
+<html lang="pt-BR">
+<%- include('partials/_head', { title: 'Início', css: 'home' }) %>
+<body>
+<%- include('partials/_icons') %>
+
+<div class="studio-shell">
+    <%- include('partials/_sidebar', { active: 'home' }) %>
+
+    <div class="studio-main">
+        <%- include('partials/_topbar', { title: 'Início', subtitle: 'Escolha como você quer treinar hoje' }) %>
+
+        <main class="studio-content">
+
+            <!-- Boas-vindas + meta do dia -->
+            <section class="home-hero s-card" aria-labelledby="saudacao">
+                <div class="hero-text">
+                    <p class="hero-eyebrow">Pronto para treinar?</p>
+                    <h2 id="saudacao">Oi, <span data-user-first>você</span>!</h2>
+                    <p class="hero-sub" id="goalMessage">Escolha um modo abaixo e comece a somar pontos.</p>
+
+                    <div class="hero-actions">
+                        <a class="btn btn-primary btn-lg" id="resumeLink" href="#modos">
+                            <span id="resumeText">Escolher modo</span>
+                            <svg class="ic"><use href="#i-arrow"/></svg>
+                        </a>
+                        <a class="btn btn-soft btn-lg" href="/ranking">Ver ranking</a>
+                    </div>
+                </div>
+
+                <div class="goal" role="img" id="goalBox" aria-label="Meta diária">
+                    <svg class="goal-ring" viewBox="0 0 120 120" aria-hidden="true">
+                        <circle class="goal-bg" cx="60" cy="60" r="52"/>
+                        <circle class="goal-fg" id="goalArc" cx="60" cy="60" r="52"/>
+                    </svg>
+                    <div class="goal-center">
+                        <strong id="goalDone">0</strong>
+                        <span id="goalTarget">de 100 pts</span>
+                    </div>
+                    <small>Meta de hoje</small>
+                </div>
+            </section>
+
+            <!-- Escolha do modo -->
+            <section id="modos" class="mb-4" aria-labelledby="modosTitulo">
+                <h2 class="section-title" id="modosTitulo">Escolha como treinar</h2>
+                <div class="row g-3 row-cols-1 row-cols-md-2 row-cols-xl-3" id="modeGrid"></div>
+            </section>
+
+            <!-- Continuar + semana -->
+            <div class="row g-3">
+                <section class="col-lg-7" aria-labelledby="recentTitulo">
+                    <div class="home-panel s-card">
+                        <h2 id="recentTitulo">Continue de onde parou</h2>
+                        <ul class="recent-list" id="recentList"></ul>
+                    </div>
+                </section>
+
+                <section class="col-lg-5" aria-labelledby="semanaTitulo">
+                    <div class="home-panel s-card">
+                        <h2 id="semanaTitulo">Sua semana</h2>
+                        <div class="week-bars" id="weekBars" role="img" aria-label="Pontos por dia da semana"></div>
+                        <p class="week-total" id="weekTotal"></p>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<%- include('partials/_scripts') %>
+
+<!--
+    DADOS DA TELA (opcional): a rota envia `pageData`. Sem ele, o script usa os exemplos abaixo.
+    {
+      modes:  [{ id, name, desc, href, icon, color, available, stats: [{ value, label }] }],
+      recent: [{ title, detail, mode, icon, color, progress (0-100), href }],
+      week:   [{ label, points }]     // 7 itens, segunda a domingo
+    }
+    icon = nome de um símbolo de partials/_icons.ejs (sem o prefixo "i-")
+-->
+<script type="application/json" id="pageData"><%- JSON.stringify(locals.pageData || null).replace(/</g, '\\u003c') %></script>
+
+<script>
+(function () {
+    /* ---------- Dados de exemplo ---------- */
+
+    const demo = {
+        modes: [
+            {
+                id: 'flashcards', name: 'Flash cards', href: '/flashcards', icon: 'cards', color: 'var(--c-cards)', available: true,
+                desc: 'Vire as cartas, teste a memória e revise no ritmo certo.',
+                stats: [{ value: 12, label: 'cartas para revisar' }, { value: 3, label: 'decks' }]
+            },
+            {
+                id: 'palavras', name: 'Jogo de palavras', href: '/palavras', icon: 'letters', color: 'var(--c-words)', available: true,
+                desc: 'Uma letra é sorteada e você diz todas as palavras que conhece com ela.',
+                stats: [{ value: 9, label: 'palavras no recorde' }, { value: '60 s', label: 'por rodada' }]
+            },
+            {
+                id: 'quiz', name: 'Quiz', href: '#', icon: 'target', color: 'var(--c-quiz)', available: false,
+                desc: 'Perguntas de múltipla escolha sobre qualquer assunto que você cadastrar.',
+                stats: []
+            }
+        ],
+        recent: [
+            { title: 'Inglês: vocabulário do dia a dia', detail: 'Flash cards · 5 de 8 cartas', icon: 'cards', color: 'var(--c-cards)', progress: 62, href: '/flashcards?deck=ingles' },
+            { title: 'Redes e infraestrutura', detail: 'Flash cards · 2 de 8 cartas', icon: 'cards', color: 'var(--c-cards)', progress: 25, href: '/flashcards?deck=redes' },
+            { title: 'Letra E', detail: 'Jogo de palavras · 9 palavras', icon: 'letters', color: 'var(--c-words)', progress: 78, href: '/palavras' }
+        ],
+        week: [
+            { label: 'S', points: 42 }, { label: 'T', points: 68 }, { label: 'Q', points: 35 },
+            { label: 'Q', points: 0 }, { label: 'S', points: 0 }, { label: 'S', points: 0 }, { label: 'D', points: 0 }
+        ]
+    };
+
+    let injetado = null;
+    try { injetado = JSON.parse(document.getElementById('pageData').textContent); } catch (e) { injetado = null; }
+    const dados = injetado || demo;
+
+    const esc = Studio.esc;
+    const $ = (id) => document.getElementById(id);
+    const hoje = (new Date().getDay() + 6) % 7; // segunda = 0
+
+    /* ---------- Modos ---------- */
+
+    $('modeGrid').innerHTML = dados.modes.map((m) => {
+        const stats = (m.stats || []).map((s) => `<li><strong>${esc(s.value)}</strong> ${esc(s.label)}</li>`).join('');
+        const acao = m.available
+            ? `<a class="btn btn-primary" href="${esc(m.href)}">Começar <svg class="ic"><use href="#i-arrow"/></svg></a>`
+            : '<button class="btn btn-soft" type="button" disabled>Disponível em breve</button>';
+
+        return `
+            <div class="col">
+                <article class="mode-card ${m.available ? 'is-available' : 'is-soon'}" style="--tone:${esc(m.color)}">
+                    <div class="mode-top">
+                        <span class="mode-ico"><svg class="ic"><use href="#i-${esc(m.icon)}"/></svg></span>
+                        ${m.available ? '' : '<span class="mode-soon">Em breve</span>'}
+                    </div>
+                    <h3>${esc(m.name)}</h3>
+                    <p>${esc(m.desc)}</p>
+                    ${stats ? `<ul class="mode-stats">${stats}</ul>` : ''}
+                    ${acao}
+                </article>
+            </div>`;
+    }).join('');
+
+    /* ---------- Continuar ---------- */
+
+    $('recentList').innerHTML = dados.recent.length
+        ? dados.recent.map((r) => `
+            <li>
+                <a class="recent-item" href="${esc(r.href)}" style="--tone:${esc(r.color)}">
+                    <span class="recent-ico"><svg class="ic"><use href="#i-${esc(r.icon)}"/></svg></span>
+                    <span class="recent-body">
+                        <strong>${esc(r.title)}</strong>
+                        <small>${esc(r.detail)}</small>
+                        <span class="progress" role="progressbar" aria-valuenow="${r.progress}" aria-valuemin="0" aria-valuemax="100">
+                            <span class="progress-bar" style="width:${r.progress}%"></span>
+                        </span>
+                    </span>
+                    <svg class="ic recent-go"><use href="#i-arrow"/></svg>
+                </a>
+            </li>`).join('')
+        : '<li class="muted">Você ainda não começou nenhum treino. Escolha um modo acima.</li>';
+
+    if (dados.recent.length) {
+        $('resumeLink').href = dados.recent[0].href;
+        $('resumeText').textContent = 'Continuar de onde parei';
+    }
+
+    /* ---------- Meta e semana (reagem aos pontos ganhos) ---------- */
+
+    const CIRCUNFERENCIA = 326.7;
+
+    function atualizarMeta() {
+        const meta = Studio.state.goal;
+        if (!meta) return;
+
+        const feito = Math.min(meta.done, meta.target);
+        $('goalDone').textContent = Studio.fmt(meta.done);
+        $('goalTarget').textContent = `de ${Studio.fmt(meta.target)} pts`;
+        $('goalArc').style.strokeDashoffset = CIRCUNFERENCIA * (1 - feito / meta.target);
+        $('goalBox').setAttribute('aria-label', `Meta diária: ${meta.done} de ${meta.target} pontos`);
+
+        $('goalMessage').textContent = meta.done >= meta.target
+            ? 'Meta batida! Tudo o que vier agora é bônus.'
+            : `Faltam ${Studio.fmt(meta.target - meta.done)} pontos para bater a meta de hoje.`;
+    }
+
+    function atualizarSemana() {
+        const meta = Studio.state.goal;
+        const dias = dados.week.map((d, i) => ({ ...d, points: i === hoje && meta ? meta.done : d.points }));
+        const maximo = Math.max(1, ...dias.map((d) => d.points));
+        const total = dias.reduce((soma, d) => soma + d.points, 0);
+
+        $('weekBars').innerHTML = dias.map((d, i) => `
+            <div class="week-col ${i === hoje ? 'is-today' : ''} ${i > hoje ? 'is-future' : ''}" title="${d.points} pts">
+                <div class="bar" style="--h:${Math.round((d.points / maximo) * 100)}%"></div>
+                <span>${esc(d.label)}</span>
+            </div>`).join('');
+
+        $('weekTotal').innerHTML = `<strong>${Studio.fmt(total)} pontos</strong> nesta semana`;
+    }
+
+    // A animação do anel começa depois do primeiro desenho
+    requestAnimationFrame(() => { atualizarMeta(); atualizarSemana(); });
+    Studio.on(() => { atualizarMeta(); atualizarSemana(); });
+})();
+</script>
+</body>
 </html>

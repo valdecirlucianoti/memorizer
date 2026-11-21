@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<%- include('partials/_head', { title: 'Jogo de palavras', css: 'palavras' }) %>
+<body>
+<%- include('partials/_icons') %>
+
+<div class="studio-shell">
+    <%- include('partials/_sidebar', { active: 'palavras' }) %>
+
+    <div class="studio-main">
+        <%- include('partials/_topbar', { title: 'Jogo de palavras', subtitle: 'Uma letra, o tempo correndo e todo o seu vocabulário' }) %>
+
+        <main class="studio-content">
+            <div class="pw-layout">
+
+                <!-- Palco do jogo -->
+                <section class="pw-stage s-card" aria-labelledby="pwTitle">
+                    <div class="pw-top">
+                        <div>
+                            <h2 id="pwTitle">Diga todas as palavras que conhecer</h2>
+                            <p>Cada palavra vale mais quanto maior ela for.</p>
+                        </div>
+                        <div class="pw-time" id="pwTime" role="timer">
+                            <svg class="ic"><use href="#i-clock"/></svg>
+                            <span id="pwTimeText">01:00</span>
+                        </div>
+                    </div>
+
+                    <div class="progress pw-timer" id="pwTimer" role="progressbar" aria-label="Tempo restante"
+                         aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <div class="progress-bar" id="pwTimerBar" style="width:100%"></div>
+                    </div>
+
+                    <div class="pw-letter-wrap">
+                        <div class="pw-letter is-idle" id="pwLetter" aria-live="polite" aria-label="Letra sorteada">?</div>
+                        <p class="pw-prompt" id="pwPrompt">Sorteie uma letra para começar.</p>
+                    </div>
+
+                    <!-- Antes de jogar -->
+                    <div class="pw-setup" id="pwSetup">
+                        <div class="pw-duration">
+                            <span>Tempo da rodada</span>
+                            <div class="seg" role="group" aria-label="Tempo da rodada" id="pwDurations"></div>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-lg" id="pwStart">
+                            <svg class="ic"><use href="#i-shuffle"/></svg> Sortear letra e começar
+                        </button>
+                    </div>
+
+                    <!-- Jogando -->
+                    <div class="pw-play" id="pwPlay" hidden>
+                        <form class="pw-form" id="pwForm" autocomplete="off">
+                            <input class="form-control pw-input" id="pwInput" type="text" maxlength="40"
+                                   placeholder="Digite uma palavra e aperte Enter" autocapitalize="off"
+                                   autocorrect="off" spellcheck="false" aria-label="Digite uma palavra">
+                            <button class="btn btn-primary" type="submit" aria-label="Enviar palavra">
+                                <span>Enviar</span> <svg class="ic"><use href="#i-check"/></svg>
+                            </button>
+                        </form>
+
+                        <p class="pw-message" id="pwMessage" role="status" aria-live="polite"></p>
+
+                        <div class="pw-tools">
+                            <button type="button" class="btn btn-soft btn-sm" id="pwSkip">
+                                <svg class="ic"><use href="#i-skip"/></svg> Trocar de letra (1x)
+                            </button>
+                            <button type="button" class="btn btn-soft btn-sm" id="pwStop">Encerrar rodada</button>
+                        </div>
+
+                        <ul class="pw-words" id="pwWords" aria-label="Palavras encontradas"></ul>
+                    </div>
+
+                    <!-- Resultado -->
+                    <div class="pw-result" id="pwResult" hidden></div>
+                </section>
+
+                <!-- Lateral -->
+                <aside class="pw-side" aria-label="Placar e regras">
+                    <section class="pw-panel s-card">
+                        <h2>Rodada atual</h2>
+                        <dl class="pw-score">
+                            <div><dt>Pontos</dt><dd id="pwScore">0</dd></div>
+                            <div><dt>Palavras</dt><dd id="pwCount">0</dd></div>
+                            <div><dt>Maior palavra</dt><dd id="pwLongest">–</dd></div>
+                            <div><dt>Letra</dt><dd id="pwLetterStat">–</dd></div>
+                        </dl>
+                    </section>
+
+                    <section class="pw-panel s-card">
+                        <h2>Seu recorde</h2>
+                        <p class="pw-record-line">
+                            <span class="rec-ico"><svg class="ic"><use href="#i-trophy"/></svg></span>
+                            <span>
+                                <strong id="pwRecordWords">–</strong>
+                                <span id="pwRecordDetail">Jogue uma rodada para registrar</span>
+                            </span>
+                        </p>
+                    </section>
+
+                    <section class="pw-panel s-card">
+                        <h2>Como jogar</h2>
+                        <ol class="pw-rules">
+                            <li>Uma letra é sorteada.</li>
+                            <li>Digite palavras que começam com ela e aperte Enter.</li>
+                            <li>Mínimo de 3 letras, sem repetir.</li>
+                            <li>3–4 letras = 2 pts · 5–6 = 4 · 7–8 = 7 · 9 ou mais = 10.</li>
+                        </ol>
+                        <p class="muted small mt-3 mb-0" id="pwDemoNote" hidden>
+                            Na demonstração o dicionário é pequeno (14 palavras por letra). Em produção, a validação vem do seu servidor.
+                        </p>
+                    </section>
+                </aside>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<%- include('partials/_scripts') %>
+
+<!--
+    DADOS DA TELA (opcional): a rota envia `pageData`. Sem ele, o script usa os exemplos abaixo.
+    {
+      config:     { durations: [30, 60, 90], defaultDuration: 60, minLength: 3 },
+      record:     { words, score, letter } | null,
+      letters:    ['A', 'B', ...],                 // letras que podem ser sorteadas
+      dictionary: { A: ['abacaxi', ...], ... }     // SÓ NA DEMONSTRAÇÃO; em produção valide no servidor
+    }
+-->
+<script type="application/json" id="pageData"><%- JSON.stringify(locals.pageData || null).replace(/</g, '\\u003c') %></script>
+
+<script>
+(function () {
+    /* ======================================================
+       Dados de exemplo
+    ====================================================== */
+
+    const demo = {
+        config: { durations: [30, 60, 90], defaultDuration: 60, minLength: 3 },
+        record: { words: 9, score: 38, letter: 'E' },
+        dictionary: {
+            A: ['abacaxi', 'abelha', 'abraço', 'açúcar', 'aeroporto', 'alegria', 'amizade', 'animal', 'árvore', 'avião', 'aventura', 'armário', 'aprender', 'amarelo'],
+            B: ['banana', 'bicicleta', 'biblioteca', 'borboleta', 'brinquedo', 'bonito', 'barulho', 'balão', 'bolsa', 'bandeira', 'beleza', 'bateria', 'bombeiro', 'barco'],
+            C: ['cachorro', 'cadeira', 'camisa', 'caminho', 'cantor', 'casa', 'cavalo', 'cidade', 'computador', 'coração', 'criança', 'cultura', 'chocolate', 'cozinha'],
+            D: ['dado', 'dança', 'dente', 'desenho', 'diamante', 'dinheiro', 'domingo', 'doce', 'dragão', 'dúvida', 'deserto', 'detalhe', 'diferente', 'dia'],
+            E: ['elefante', 'elegante', 'extremo', 'escola', 'espelho', 'estrela', 'energia', 'exemplo', 'encontro', 'esporte', 'estudo', 'empresa', 'equipe', 'entrada'],
+            F: ['faca', 'família', 'farol', 'feijão', 'felicidade', 'festa', 'floresta', 'foguete', 'formiga', 'fotografia', 'futuro', 'fruta', 'fogo', 'ferramenta'],
+            M: ['macaco', 'mala', 'mamão', 'mapa', 'mar', 'mesa', 'música', 'montanha', 'mundo', 'mochila', 'mistério', 'movimento', 'memória', 'maravilha'],
+            P: ['pássaro', 'pão', 'papel', 'parede', 'pedra', 'peixe', 'planeta', 'porta', 'praia', 'professor', 'projeto', 'paciência', 'palavra', 'pergunta'],
+            S: ['sapato', 'saúde', 'segredo', 'sol', 'sorriso', 'sorvete', 'sucesso', 'semana', 'silêncio', 'sombra', 'solução', 'sábado', 'sentido', 'surpresa'],
+            T: ['tarde', 'tempo', 'terra', 'tesouro', 'tigre', 'trabalho', 'trem', 'tartaruga', 'tempestade', 'tecnologia', 'telefone', 'teatro', 'tinta', 'tranquilo']
+        }
+    };
+
+    let injetado = null;
+    try { injetado = JSON.parse(document.getElementById('pageData').textContent); } catch (e) { injetado = null; }
+    const dados = injetado || demo;
+    const config = Object.assign({ durations: [30, 60, 90], defaultDuration: 60, minLength: 3 }, dados.config);
+    const dicionario = dados.dictionary || null;
+    const letras = dados.letters || (dicionario ? Object.keys(dicionario) : 'ABCDEFGHIJLMNOPQRSTUV'.split(''));
+
+    /* ======================================================
+       PRODUÇÃO: os dois pontos que você precisa ligar ao servidor
+    ====================================================== */
+
+    // Diz se a palavra existe. Devolve { ok: true, palavra } ou { ok: false, motivo }.
+    // Aqui só valida contra o dicionário de demonstração. Troque por, por exemplo:
+    //   const r = await fetch(`/api/palavras/validar?letra=${letra}&q=${encodeURIComponent(texto)}`);
+    //   return r.json();
+    async function validarPalavra(letra, texto, partida) {
+        const norm = normalizar(texto);
+
+        if (!/^[a-z]+$/.test(norm)) return { ok: false, motivo: 'Use apenas letras, sem espaços ou hífen.' };
+        if (norm[0] !== normalizar(letra)) return { ok: false, motivo: `A palavra precisa começar com ${letra}.` };
+        if (norm.length < config.minLength) return { ok: false, motivo: `Use pelo menos ${config.minLength} letras.` };
+        if (partida.usadas.has(norm)) return { ok: false, motivo: 'Você já disse essa palavra.' };
+
+        const lista = dicionario && dicionario[letra];
+        if (lista) {
+            const achada = lista.find((p) => normalizar(p) === norm);
+            return achada ? { ok: true, palavra: achada } : { ok: false, motivo: 'Não encontrei essa palavra no dicionário.' };
+        }
+        return { ok: true, palavra: texto.trim().toLowerCase() };
+    }
+
+    // Guarda o resultado da rodada (e o recorde) no servidor.
+    async function salvarPartida(resultado) {
+        // Exemplo: await fetch('/api/palavras/partidas', { method: 'POST', body: JSON.stringify(resultado), ... });
+        Studio.registrar({ tipo: 'palavras:partida', ...resultado });
+    }
+
+    /* ======================================================
+       Utilitários e estado
+    ====================================================== */
+
+    const esc = Studio.esc;
+    const $ = (id) => document.getElementById(id);
+    const reduzMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const normalizar = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+    // 3–4 letras = 2 pts · 5–6 = 4 · 7–8 = 7 · 9 ou mais = 10
+    function pontosDaPalavra(tamanho) {
+        if (tamanho <= 4) return 2;
+        if (tamanho <= 6) return 4;
+        if (tamanho <= 8) return 7;
+        return 10;
+    }
+
+    function embaralhar(lista) {
+        const copia = [...lista];
+        for (let i = copia.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copia[i], copia[j]] = [copia[j], copia[i]];
+        }
+        return copia;
+    }
+
+    const formatarTempo = (segundos) =>
+        `${String(Math.floor(segundos / 60)).padStart(2, '0')}:${String(segundos % 60).padStart(2, '0')}`;
+
+    let duracao = config.defaultDuration;
+    let partida = null;
+    let rolando = false;
+    let ultimaLetra = null;
+    let recorde = dados.record || null;
+
+    /* ======================================================
+       Renderização
+    ====================================================== */
+
+    function renderDuracoes() {
+        $('pwDurations').innerHTML = config.durations.map((s) =>
+            `<button type="button" data-duracao="${s}" aria-pressed="${s === duracao}">${s} s</button>`).join('');
+        $('pwTimeText').textContent = formatarTempo(duracao);
+    }
+
+    function renderRecorde() {
+        if (!recorde) return;
+        $('pwRecordWords').textContent = `${recorde.words} ${recorde.words === 1 ? 'palavra' : 'palavras'}`;
+        $('pwRecordDetail').textContent = `${recorde.score} pts na letra ${recorde.letter}`;
+    }
+
+    function renderPlacar() {
+        const p = partida;
+        $('pwScore').textContent = p ? p.pontos : 0;
+        $('pwCount').textContent = p ? p.encontrados.length : 0;
+        $('pwLetterStat').textContent = p ? p.letra : '–';
+
+        const maior = p && p.encontrados.length
+            ? p.encontrados.reduce((m, w) => (w.palavra.length > m.length ? w.palavra : m), '')
+            : '–';
+        $('pwLongest').textContent = maior;
+        $('pwLongest').title = maior;
+    }
+
+    function criarChip(palavra, pontos, perdida) {
+        const li = document.createElement('li');
+        li.className = `word-chip ${perdida ? 'is-missed' : ''}`;
+        li.innerHTML = `<span>${esc(palavra)}</span>${perdida ? '' : `<small>+${pontos}</small>`}`;
+        return li;
+    }
+
+    function mensagem(texto, tipo) {
+        const el = $('pwMessage');
+        el.textContent = texto;
+        el.className = `pw-message ${tipo ? `is-${tipo}` : ''}`;
+    }
+
+    function tremer() {
+        const input = $('pwInput');
+        input.classList.remove('is-shake');
+        void input.offsetWidth;
+        input.classList.add('is-shake');
+    }
+
+    /* ======================================================
+       Sorteio da letra
+    ====================================================== */
+
+    function sortearLetra(evitar) {
+        const opcoes = letras.filter((l) => l !== evitar);
+        return opcoes[Math.floor(Math.random() * opcoes.length)];
+    }
+
+    function rolarLetra(final) {
+        return new Promise((resolve) => {
+            const el = $('pwLetter');
+            el.classList.remove('is-idle', 'is-landed');
+
+            const pousar = () => {
+                el.classList.remove('is-rolling');
+                el.textContent = final;
+                void el.offsetWidth;
+                el.classList.add('is-landed');
+                resolve();
+            };
+
+            if (reduzMovimento) return pousar();
+
+            el.classList.add('is-rolling');
+            const total = 14;
+            let passo = 0;
+
+            (function girar() {
+                if (passo >= total) return pousar();
+                el.textContent = letras[Math.floor(Math.random() * letras.length)];
+                passo++;
+                setTimeout(girar, 55 + passo * 9); // vai desacelerando
+            })();
+        });
+    }
+
+    function mostrarPrompt(letra) {
+        $('pwPrompt').innerHTML = `Palavras que começam com <strong>${esc(letra)}</strong>`;
+        $('pwLetter').setAttribute('aria-label', `Letra sorteada: ${letra}`);
+    }
+
+    /* ======================================================
+       Rodada
+    ====================================================== */
+
+    async function comecar() {
+        if (rolando) return;
+        rolando = true;
+
+        const letra = sortearLetra(ultimaLetra);
+        ultimaLetra = letra;
+
+        $('pwSetup').hidden = true;
+        $('pwResult').hidden = true;
+        $('pwPrompt').textContent = 'Sorteando…';
+
+        await rolarLetra(letra);
+        mostrarPrompt(letra);
+        rolando = false;
+
+        partida = {
+            letra, duracao,
+            fim: Date.now() + duracao * 1000,
+            encontrados: [], usadas: new Set(), pontos: 0,
+            pulou: false, verificando: false, encerrada: false, timerId: null
+        };
+
+        $('pwWords').replaceChildren();
+        $('pwPlay').hidden = false;
+        $('pwSkip').disabled = false;
+        $('pwInput').value = '';
+        $('pwInput').disabled = false;
+        $('pwInput').focus();
+        mensagem('');
+
+        renderPlacar();
+        partida.timerId = setInterval(tique, 100);
+        tique();
+
+        Studio.registrar({ tipo: 'palavras:inicio', letra, duracao });
+    }
+
+    function tique() {
+        if (!partida || partida.encerrada) return;
+
+        const restante = Math.max(0, partida.fim - Date.now());
+        const segundos = Math.ceil(restante / 1000);
+        const pct = (restante / (partida.duracao * 1000)) * 100;
+        const acabando = restante <= 10000;
+
+        $('pwTimeText').textContent = formatarTempo(segundos);
+        $('pwTimerBar').style.width = `${pct}%`;
+        $('pwTimer').setAttribute('aria-valuenow', Math.round(pct));
+        $('pwTime').classList.toggle('is-low', acabando);
+        $('pwTimer').classList.toggle('is-low', acabando);
+
+        if (restante <= 0) encerrar('tempo');
+    }
+
+    async function enviar(texto) {
+        if (!partida || partida.encerrada || partida.verificando || rolando) return;
+
+        partida.verificando = true;
+        const atual = partida;
+        const resposta = await validarPalavra(atual.letra, texto, atual);
+        atual.verificando = false;
+
+        if (atual.encerrada) return; // o tempo acabou enquanto validava
+
+        if (!resposta.ok) {
+            mensagem(resposta.motivo, 'bad');
+            tremer();
+            return;
+        }
+
+        const norm = normalizar(resposta.palavra);
+        const pontos = pontosDaPalavra(norm.length);
+
+        atual.usadas.add(norm);
+        atual.encontrados.unshift({ palavra: resposta.palavra, pontos });
+        atual.pontos += pontos;
+
+        $('pwWords').prepend(criarChip(resposta.palavra, pontos, false));
+        $('pwInput').value = '';
+        mensagem(`+${pontos} pts · ${resposta.palavra}`, 'ok');
+
+        Studio.addPoints(pontos, 'words', resposta.palavra);
+        renderPlacar();
+    }
+
+    async function trocarLetra() {
+        if (!partida || partida.encerrada || partida.pulou || rolando) return;
+
+        partida.pulou = true;
+        $('pwSkip').disabled = true;
+        $('pwInput').disabled = true;
+        rolando = true;
+
+        const nova = sortearLetra(partida.letra);
+        ultimaLetra = nova;
+        await rolarLetra(nova);
+
+        rolando = false;
+        if (!partida || partida.encerrada) return;
+
+        partida.letra = nova;
+        mostrarPrompt(nova);
+        mensagem('Letra trocada! Siga em frente.', 'ok');
+        $('pwInput').disabled = false;
+        $('pwInput').focus();
+        renderPlacar();
+    }
+
+    function palavrasQueFaltaram(p) {
+        const lista = dicionario && dicionario[p.letra];
+        if (!lista) return [];
+        return embaralhar(lista.filter((w) => !p.usadas.has(normalizar(w)))).slice(0, 8);
+    }
+
+    function encerrar(motivo) {
+        if (!partida || partida.encerrada) return;
+
+        const p = partida;
+        p.encerrada = true;
+        clearInterval(p.timerId);
+        $('pwTime').classList.remove('is-low');
+        $('pwTimer').classList.remove('is-low');
+        $('pwInput').disabled = true;
+
+        const palavras = p.encontrados.length;
+        const maior = palavras ? p.encontrados.reduce((m, w) => (w.palavra.length > m.length ? w.palavra : m), '') : '–';
+        const novoRecorde = palavras > 0 && (!recorde || palavras > recorde.words ||
+            (palavras === recorde.words && p.pontos > recorde.score));
+
+        if (novoRecorde) {
+            recorde = { words: palavras, score: p.pontos, letter: p.letra };
+            Studio.addPoints(10, 'words', 'Novo recorde');
+            Studio.toast('Novo recorde! +10 pts de bônus.');
+            renderRecorde();
+        }
+
+        salvarPartida({ letra: p.letra, palavras: p.encontrados.map((w) => w.palavra), pontos: p.pontos, duracao: p.duracao, motivo, novoRecorde });
+
+        const faltaram = palavrasQueFaltaram(p);
+
+        $('pwPlay').hidden = true;
+        $('pwResult').hidden = false;
+        $('pwResult').innerHTML = `
+            <h3>${motivo === 'tempo' ? 'Tempo esgotado!' : 'Rodada encerrada'}</h3>
+            <p>Letra <strong>${esc(p.letra)}</strong> · ${palavras} ${palavras === 1 ? 'palavra' : 'palavras'}</p>
+            ${novoRecorde ? '<span class="pw-record mb-3">Novo recorde!</span>' : ''}
+            <div class="pw-result-stats">
+                <div><strong>${palavras}</strong><span>palavras</span></div>
+                <div><strong>+${p.pontos}</strong><span>pontos</span></div>
+                <div><strong>${esc(maior)}</strong><span>maior palavra</span></div>
+            </div>
+            ${palavras ? `<div class="pw-missed"><h4>Você disse</h4><ul class="pw-words" id="pwFoundList"></ul></div>` : ''}
+            ${faltaram.length ? `<div class="pw-missed"><h4>Você ainda poderia ter dito</h4><ul class="pw-words" id="pwMissedList"></ul></div>` : ''}
+            <div class="pw-result-actions">
+                <button type="button" class="btn btn-primary btn-lg" data-acao="again">
+                    <svg class="ic"><use href="#i-shuffle"/></svg> Jogar de novo
+                </button>
+                <a class="btn btn-soft btn-lg" href="/">Voltar ao início</a>
+            </div>`;
+
+        const achadas = $('pwFoundList');
+        if (achadas) p.encontrados.slice().reverse().forEach((w) => achadas.appendChild(criarChip(w.palavra, w.pontos, false)));
+        const perdidas = $('pwMissedList');
+        if (perdidas) faltaram.forEach((w) => perdidas.appendChild(criarChip(w, 0, true)));
+
+        $('pwTimeText').textContent = formatarTempo(duracao);
+        $('pwTimerBar').style.width = '100%';
+    }
+
+    /* ======================================================
+       Eventos
+    ====================================================== */
+
+    $('pwStart').addEventListener('click', comecar);
+
+    $('pwDurations').addEventListener('click', (e) => {
+        const botao = e.target.closest('[data-duracao]');
+        if (!botao) return;
+        duracao = Number(botao.dataset.duracao);
+        renderDuracoes();
+    });
+
+    $('pwForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const texto = $('pwInput').value.trim();
+        if (texto) enviar(texto);
+    });
+
+    $('pwInput').addEventListener('input', () => {
+        $('pwInput').classList.remove('is-shake');
+        if ($('pwMessage').classList.contains('is-bad')) mensagem('');
+    });
+
+    $('pwSkip').addEventListener('click', trocarLetra);
+    $('pwStop').addEventListener('click', () => encerrar('manual'));
+
+    $('pwResult').addEventListener('click', (e) => {
+        if (e.target.closest('[data-acao="again"]')) comecar();
+    });
+
+    /* ======================================================
+       Início
+    ====================================================== */
+
+    $('pwDemoNote').hidden = !!injetado;
+    renderDuracoes();
+    renderRecorde();
+    renderPlacar();
+})();
+</script>
+</body>
+</html>

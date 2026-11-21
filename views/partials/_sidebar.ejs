@@ -1,0 +1,64 @@
+<%#
+    Menu lateral. Parâmetro: active -> 'home' | 'flashcards' | 'palavras' | 'ranking'
+    Para adicionar um modo de treino: copie um bloco <a class="side-link"> e troque href, ícone e --tone.
+    Os números (badges) e a sequência são preenchidos pelo studio.js.
+%>
+<% const ativo = locals.active || ''; %>
+<aside class="offcanvas-lg offcanvas-start studio-aside" id="sidebar" tabindex="-1" aria-label="Menu principal">
+    <div class="studio-side">
+
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true"><svg class="ic"><use href="#i-bolt"/></svg></span>
+            <span class="brand-text">
+                <strong>memorizer</strong>
+                <small>treine qualquer coisa</small>
+            </span>
+            <button type="button" class="btn-close d-lg-none ms-auto" data-bs-dismiss="offcanvas"
+                    data-bs-target="#sidebar" aria-label="Fechar menu"></button>
+        </div>
+
+        <nav class="side-nav" aria-label="Seções">
+            <a href="/" class="side-link <%= ativo === 'home' ? 'is-active' : '' %>" style="--tone:var(--c-home)"
+               <%- ativo === 'home' ? 'aria-current="page"' : '' %>>
+                <span class="side-ico"><svg class="ic"><use href="#i-home"/></svg></span>
+                <span class="side-name">Início</span>
+            </a>
+
+            <p class="side-label">Treinar</p>
+
+            <a href="/flashcards" class="side-link <%= ativo === 'flashcards' ? 'is-active' : '' %>" style="--tone:var(--c-cards)"
+               <%- ativo === 'flashcards' ? 'aria-current="page"' : '' %>>
+                <span class="side-ico"><svg class="ic"><use href="#i-cards"/></svg></span>
+                <span class="side-name">Flash cards</span>
+                <span class="side-badge" data-badge="flashcards" hidden></span>
+            </a>
+
+            <a href="/palavras" class="side-link <%= ativo === 'palavras' ? 'is-active' : '' %>" style="--tone:var(--c-words)"
+               <%- ativo === 'palavras' ? 'aria-current="page"' : '' %>>
+                <span class="side-ico"><svg class="ic"><use href="#i-letters"/></svg></span>
+                <span class="side-name">Jogo de palavras</span>
+            </a>
+
+            <p class="side-label">Competição</p>
+
+            <a href="/ranking" class="side-link <%= ativo === 'ranking' ? 'is-active' : '' %>" style="--tone:var(--c-rank)"
+               <%- ativo === 'ranking' ? 'aria-current="page"' : '' %>>
+                <span class="side-ico"><svg class="ic"><use href="#i-trophy"/></svg></span>
+                <span class="side-name">Ranking</span>
+            </a>
+        </nav>
+
+        <!-- Sequência de dias (preenchida pelo studio.js) -->
+        <section class="streak-card" aria-label="Sequência de treino">
+            <div class="streak-head">
+                <span class="streak-flame" aria-hidden="true"><svg class="ic"><use href="#i-flame"/></svg></span>
+                <div>
+                    <strong><span data-streak-days>0</span> dias seguidos</strong>
+                    <small data-streak-hint>Treine hoje para manter a sequência</small>
+                </div>
+            </div>
+            <div class="streak-week" data-streak-week aria-hidden="true"></div>
+        </section>
+
+    </div>
+</aside>

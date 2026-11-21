@@ -1,0 +1,80 @@
+<%#
+    Barra superior com pontuação e ranking.
+    Parâmetros: title (título da tela) e subtitle (opcional).
+    Tudo que é número vem do studio.js (data-stat="...").
+%>
+<header class="studio-topbar">
+    <div class="topbar-left">
+        <button class="icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar"
+                aria-controls="sidebar" aria-label="Abrir menu">
+            <svg class="ic"><use href="#i-menu"/></svg>
+        </button>
+        <div class="topbar-title">
+            <h1><%= locals.title || 'Início' %></h1>
+            <% if (locals.subtitle) { %><p><%= subtitle %></p><% } %>
+        </div>
+    </div>
+
+    <div class="topbar-stats">
+
+        <!-- Sequência -->
+        <div class="stat-chip stat-streak" title="Dias seguidos treinando">
+            <svg class="ic"><use href="#i-flame"/></svg>
+            <strong data-stat="streak">0</strong>
+        </div>
+
+        <!-- Pontos e nível -->
+        <div class="stat-chip stat-points" title="Seus pontos e nível">
+            <span class="level-ring" data-level-ring aria-hidden="true"><b data-stat="level">1</b></span>
+            <span class="xp-text">
+                <strong><span data-stat="points">0</span> pts</strong>
+                <small class="d-none d-md-block" data-stat="next">&nbsp;</small>
+            </span>
+            <span class="points-pop" data-points-pop aria-hidden="true"></span>
+        </div>
+
+        <!-- Ranking (abre uma prévia) -->
+        <div class="dropdown">
+            <button class="stat-chip stat-rank" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                    aria-expanded="false" aria-label="Abrir prévia do ranking">
+                <svg class="ic"><use href="#i-trophy"/></svg>
+                <strong data-stat="rank">#–</strong>
+                <span class="d-none d-lg-inline stat-unit" data-stat="rank-period">na semana</span>
+                <svg class="ic ic-sm"><use href="#i-chevron"/></svg>
+            </button>
+
+            <div class="dropdown-menu dropdown-menu-end rank-pop p-0">
+                <div class="rank-pop-head">
+                    <strong>Ranking</strong>
+                    <div class="seg" role="group" aria-label="Período do ranking">
+                        <button type="button" data-rank-period="week" aria-pressed="true">Semana</button>
+                        <button type="button" data-rank-period="month" aria-pressed="false">Mês</button>
+                        <button type="button" data-rank-period="all" aria-pressed="false">Geral</button>
+                    </div>
+                </div>
+                <ol class="mini-rank" data-rank-mini></ol>
+                <a class="rank-pop-foot" href="/ranking">Ver ranking completo
+                    <svg class="ic ic-sm"><use href="#i-arrow"/></svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Tema -->
+        <button class="icon-btn" type="button" data-theme-toggle aria-label="Alternar entre tema claro e escuro">
+            <svg class="ic i-moon"><use href="#i-moon"/></svg>
+            <svg class="ic i-sun"><use href="#i-sun"/></svg>
+        </button>
+
+        <!-- Usuário -->
+        <div class="dropdown">
+            <button class="avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu do usuário">
+                <span class="avatar" data-user-avatar>?</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header" data-user-name>Visitante</h6></li>
+                <li><a class="dropdown-item" href="/perfil">Meu perfil</a></li>
+                <li><a class="dropdown-item" href="/logout">Sair</a></li>
+            </ul>
+        </div>
+    </div>
+</header>

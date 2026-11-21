@@ -1,0 +1,16 @@
+<%#
+    Fim da página: toasts, DADOS COMPARTILHADOS (usuário, pontos, sequência, ranking) e scripts base.
+    A rota envia `studio` (objeto). Sem ele, o studio.js usa dados de demonstração.
+    Formato completo em /public/javascripts/studio.js (início do arquivo).
+%>
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="studioToasts"></div>
+
+<script type="application/json" id="studioData"><%- JSON.stringify(locals.studio || null).replace(/</g, '\\u003c') %></script>
+<script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+<% if (typeof studio !== 'undefined' && studio) { %>
+    <script type="application/json" id="studioData">
+        <%- JSON.stringify(studio) %>
+    </script>
+<% } %>
+<script src="/javascripts/studio.js"></script>
+<script src="/javascripts/studio.js"></script>
